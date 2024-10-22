@@ -24,10 +24,10 @@ export async function GET() {
         "x-mb": {
             "account-id": key.accountId,
             assistant: {
-                name: "Your Assistant",
+                name: "Odds Assistant",
                 description: "An assistant that answers with blockchain information",
                 instructions: "You answer with a list of blockchains. Use the tools to get blockchain information.",
-                tools: [{ type: "generate-transaction" }]
+                tools: [{ type: "generate-transaction" }, { type: "get-blochains" }, { type: "get-odds" }]
             },
         },
         paths: {
@@ -56,6 +56,206 @@ export async function GET() {
                     },
                 },
             },
+            "/api/odds/get-odds": {
+                get: {
+                    summary: "Get soccer odds information",
+                    description: "Respond with a list of soccer games and their odds",
+                    operationId: "get-odds",
+                    parameters: [
+                        {
+                            name: "team",
+                            in: "query",
+                            required: false,
+                            schema: {
+                                type: "string"
+                            },
+                            description: "Filter the results by the specified team name"
+                        },
+                        {
+                            name: "sport",
+                            in: "query",
+                            required: false,
+                            schema: {
+                                type: "string",
+                                default: "soccer"
+                            },
+                            description: "The sport key for which to return events and odds"
+                        },
+                        {
+                            name: "regions",
+                            in: "query",
+                            required: false,
+                            schema: {
+                                type: "string",
+                                default: "us"
+                            },
+                            description: "Specifies the region for bookmakers"
+                        },
+                        {
+                            name: "markets",
+                            in: "query",
+                            required: false,
+                            schema: {
+                                type: "string",
+                                default: "h2h,spreads"
+                            },
+                            description: "The odds market to return (e.g., head-to-head, spreads)"
+                        },
+                        {
+                            name: "dateFormat",
+                            in: "query",
+                            required: false,
+                            schema: {
+                                type: "string",
+                                default: "iso"
+                            },
+                            description: "Format of returned timestamps (e.g., iso or unix)"
+                        },
+                        {
+                            name: "oddsFormat",
+                            in: "query",
+                            required: false,
+                            schema: {
+                                type: "string",
+                                default: "decimal"
+                            },
+                            description: "Format of returned odds (e.g., decimal or fractional)"
+                        },
+                        {
+                            name: "commenceTimeFrom",
+                            in: "query",
+                            required: false,
+                            schema: {
+                                type: "string",
+                                format: "date-time",
+                                default: "2023-09-09T00:00:00Z"
+                            },
+                            description: "Start time to filter events"
+                        },
+                        {
+                            name: "commenceTimeTo",
+                            in: "query",
+                            required: false,
+                            schema: {
+                                type: "string",
+                                format: "date-time",
+                                default: "2023-09-09T00:00:00Z"
+                            },
+                            description: "End time to filter events"
+                        },
+                        {
+                            name: "includeLinks",
+                            in: "query",
+                            required: false,
+                            schema: {
+                                type: "boolean",
+                                default: true
+                            },
+                            description: "Include bookmaker links in the response"
+                        },
+                        {
+                            name: "includeSids",
+                            in: "query",
+                            required: false,
+                            schema: {
+                                type: "boolean",
+                                default: true
+                            },
+                            description: "Include source IDs (bookmaker IDs) in the response"
+                        },
+                        {
+                            name: "includeBetLimits",
+                            in: "query",
+                            required: false,
+                            schema: {
+                                type: "boolean",
+                                default: true
+                            },
+                            description: "Include bet limits in the response"
+                        }
+                    ],
+                    responses: {
+                        "200": {
+                            description: "Successful response",
+                            content: {
+                                "application/json": {
+                                    schema: {
+                                        type: "object",
+                                        properties: {
+                                            data: {
+                                                type: "array",
+                                                items: {
+                                                    type: "object",
+                                                    properties: {
+                                                        id: { type: "string" },
+                                                        sport_key: { type: "string" },
+                                                        sport_title: { type: "string" },
+                                                        commence_time: { type: "string", format: "date-time" },
+                                                        home_team: { type: "string" },
+                                                        away_team: { type: "string" },
+                                                        bookmakers: {
+                                                            type: "array",
+                                                            items: {
+                                                                type: "object",
+                                                                properties: {
+                                                                    key: { type: "string" },
+                                                                    title: { type: "string" },
+                                                                    last_update: { type: "string", format: "date-time" },
+                                                                    link: { type: "string" },
+                                                                    sid: { type: "string" },
+                                                                    markets: {
+                                                                        type: "array",
+                                                                        items: {
+                                                                            type: "object",
+                                                                            properties: {
+                                                                                key: { type: "string" },
+                                                                                last_update: { type: "string", format: "date-time" },
+                                                                                outcomes: {
+                                                                                    type: "array",
+                                                                                    items: {
+                                                                                        type: "object",
+                                                                                        properties: {
+                                                                                            name: { type: "string" },
+                                                                                            price: { type: "number" },
+                                                                                            link: { type: "string" },
+                                                                                            sid: { type: "string" },
+                                                                                            bet_limit: { type: "number", nullable: true }
+                                                                                        }
+                                                                                    }
+                                                                                }
+                                                                            }
+                                                                        }
+                                                                    }
+                                                                }
+                                                            }
+                                                        }
+                                                    }
+                                                }
+                                            }
+                                        }
+                                    }
+                                }
+                            }
+                        },
+                        "500": {
+                            description: "API key missing or server error",
+                            content: {
+                                "application/json": {
+                                    schema: {
+                                        type: "object",
+                                        properties: {
+                                            error: {
+                                                type: "string",
+                                                description: "Error message"
+                                            }
+                                        }
+                                    }
+                                }
+                            }
+                        }
+                    }
+                }
+            }, 
             "/api/tools/get-user": {
                 get: {
                     summary: "get user information",
